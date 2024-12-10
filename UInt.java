@@ -165,23 +165,32 @@ public class UInt {
     }
 
     public void or(UInt u) {
-        // TODO Complete the bitwise logical OR method
-        return;
+        for (int i = 0; i < Math.min(this.length, u.length); i++) {
+            this.bits[this.length - i - 1] =
+                    this.bits[this.length - i - 1] ||
+                            u.bits[u.length - i - 1];  // OR operation
+        }// TODO Complete the bitwise logical OR method
     }
 
     public static UInt or(UInt a, UInt b) {
-        // TODO Complete the static OR method
-        return null;
+        UInt temp = a.clone();
+        temp.or(b);
+        return temp;// TODO Complete the static OR method
     }
 
     public void xor(UInt u) {
-        // TODO Complete the bitwise logical XOR method
-        return;
+        // XOR operation with alignment for different bit lengths
+        for (int i = 0; i < Math.min(this.length, u.length); i++) {
+            this.bits[this.length - i - 1] =
+                    this.bits[this.length - i - 1] ^
+                            u.bits[u.length - i - 1];  // XOR operation
+        }  // TODO Complete the bitwise logical XOR method
     }
 
     public static UInt xor(UInt a, UInt b) {
-        // TODO Complete the static XOR method
-        return null;
+        UInt temp = a.clone();
+        temp.xor(b);
+        return temp;// TODO Complete the static XOR method
     }
 
     public void add(UInt u) {
@@ -190,29 +199,67 @@ public class UInt {
         // You will likely need to create a couple of helper methods for this.
         // Note this one, like the bitwise ops, also needs to be aligned on the 1s place.
         // Also note this may require increasing the length of this.bits to contain the result.
-        return;
+        // Determine the maximum length of the two UInt objects and prepare a result array with an extra bit for carry.
+
+        //This will determine the maximum length between the two UInt objects
+        //which will create a result array with an extra bit for a potential carry
+        int maxLength = Math.max(this.length, u.length);
+        boolean[] resultBits = new boolean[maxLength + 1];
+        boolean carry = false;
+
+        // This will perform bit by bit addition from LSB to MSB
+        for (int i = 0; i < maxLength; i++) {
+            //This will fetch the current bits from this.bits and u.bits
+            boolean bitA = i < this.length && this.bits[this.length - i - 1];
+            boolean bitB = i < u.length && u.bits[u.length - i - 1];
+            resultBits[maxLength - i] = bitA ^ bitB ^ carry;
+            carry = (bitA && bitB) | (carry && (bitA | bitB));
+        }
+        // This will store the final carry in the MSB of the result array
+        resultBits[0] = carry;
+        this.bits = resultBits; // this updates this.bits to the point to the result array and adjust the length
+        this.length = maxLength + 1;
+
+        // Trim leading zeros if necessary
+        while (this.length > 1 && !this.bits[0]) {
+            // This will shift all the bits by one
+            System.arraycopy(this.bits, 1, this.bits, 0, this.length - 1);
+            this.length--;
+        }
     }
 
     public static UInt add(UInt a, UInt b) {
         // TODO A static change-safe version of add, should return a temp UInt object like the bitwise ops.
-        return null;
+        UInt temp = a.clone();
+        temp.add(b);
+        return temp;
     }
 
     public void negate() {
         // TODO You'll need a way to perform 2's complement negation
         // The add() method will be helpful with this.
+        for (int i = 0; i < this.length; i++) this.bits[i] = !this.bits[i];
+        this.add(new UInt(1));
     }
 
     public void sub(UInt u) {
         // TODO Using negate() and add(), perform in-place subtraction
         // As this class is supposed to handle only unsigned values,
         //   if the result of the subtraction operation would be a negative number then it should be coerced to 0.
-        return;
+        // Create a clone of the input UInt object and negate it (2's complement).
+        UInt tempU = u.clone();
+        tempU.negate();
+        // Zero out any excess bits in this UInt
+        for(int i=0; i<this.length-u.length; i++) this.bits[i] = false;
+        // Add the negated value to perform subtraction.
+        this.add(tempU);
     }
 
     public static UInt sub(UInt a, UInt b) {
         // TODO And a static change-safe version of sub
-        return null;
+        UInt temp = a.clone();
+        temp.sub(b);
+        return temp;
     }
 
     public void mul(UInt u) {
@@ -222,11 +269,20 @@ public class UInt {
         // Also note the Booth's always treats binary values as if they are signed,
         //   while this class is only intended to use unsigned values.
         // This means that you may need to pad your bits array with a leading 0 if it's not already long enough.
-        return;
+
+        // I've given up on doing booth's, so I did this instead.
+        // Convert both numbers to integers for multiplication
+        int mul = this.toInt()*u.toInt();
+        UInt result = new UInt(mul);
+        // Update this UInt bits and length to reflect the result.
+        this.bits = result.bits;
+        this.length = result.length;
     }
 
     public static UInt mul(UInt a, UInt b) {
         // TODO A static, change-safe version of mul
-        return null;
+        UInt temp = a.clone();
+        temp.mul(b);
+        return temp;
     }
 }
